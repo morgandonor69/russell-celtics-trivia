@@ -13,9 +13,32 @@ export function dailySeed() {
   return Math.abs(hash);
 }
 
-export function getTodaysPlayer() {
+// Fallback used only if the hosted schedule can't be reached (offline, etc.)
+// Keeps the game playable, but the real daily answer comes from answers.json.
+export function getTodaysPlayerFallback() {
   const idx = dailySeed() % PLAYERS.length;
   return PLAYERS[idx];
+}
+
+export function dateKeyRaw(d = new Date()) {
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+// Fetches today's answer from the hosted schedule (public/answers.json),
+// which acts as our once-a-day "database" of daily answers. Falls back to
+// a deterministic local computation if the fetch fails for any reason.
+export async function fetchTodaysPlayer() {
+  try {
+    const res = await fetch('./answers.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('bad response');
+    const schedule = await res.json();
+    const name = schedule[dateKeyRaw()];
+    const player = PLAYERS.find((p) => p.name === name);
+    if (player) return player;
+    throw new Error('no matching player for today');
+  } catch (e) {
+    return getTodaysPlayerFallback();
+  }
 }
 
 export function todayKey() {

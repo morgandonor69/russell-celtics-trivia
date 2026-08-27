@@ -4,7 +4,7 @@ import logo from './assets/logo.png';
 import { PLAYERS } from './players.js';
 import {
   MAX_GUESSES,
-  getTodaysPlayer,
+  fetchTodaysPlayer,
   todayKey,
   safeGet,
   safeSet,
@@ -18,9 +18,8 @@ import GuessInput from './components/GuessInput.jsx';
 import GuessRow, { EmptyRow, FLIP_DURATION_MS } from './components/GuessRow.jsx';
 import Modal from './components/Modal.jsx';
 
-const target = getTodaysPlayer();
-
 export default function App() {
+  const [target, setTarget] = useState(null);
   const [started, setStarted] = useState(false);
   const [guesses, setGuesses] = useState([]);
   const [newestIsAnimating, setNewestIsAnimating] = useState(false);
@@ -32,23 +31,35 @@ export default function App() {
   const [showStats, setShowStats] = useState(false);
   const messageTimeout = useRef(null);
 
-  // Load saved progress for today once game starts
+  // Fetch today's answer from the hosted daily schedule once, on load.
   useEffect(() => {
-    if (!started) return;
+    let cancelled = false;
+    fetchTodaysPlayer().then((p) => {
+      if (!cancelled) setTarget(p);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Once we know today's player, restore any progress saved earlier today
+  // (e.g. two guesses already made before a refresh) and jump straight back in.
+  useEffect(() => {
+    if (!target) return;
     const saved = safeGet(todayKey());
     if (!saved) return;
     try {
       const data = JSON.parse(saved);
       const restored = data.guesses.map((n) => PLAYERS.find((p) => p.name === n)).filter(Boolean);
+      if (restored.length === 0) return;
       setGuesses(restored);
       setGameOver(data.gameOver);
+      setStarted(true);
       if (data.gameOver) {
         const didWin = restored.some((g) => g.name === target.name);
         setWon(didWin);
         setShowResult(true);
       }
     } catch (e) { /* ignore corrupt storage */ }
-  }, [started]);
+  }, [target]);
 
   function flashMessage(msg) {
     setMessage(msg);
@@ -121,7 +132,11 @@ export default function App() {
         <div className="subtitle">CAN YOU GUESS TODAY'S CELTIC?</div>
       </header>
 
-      {!started ? (
+      {!target ? (
+        <div className="start-screen">
+          <div className="loading-text">Loading today's puzzle…</div>
+        </div>
+      ) : !started ? (
         <StartScreen onStart={() => setStarted(true)} />
       ) : (
         <div className="game-screen">
@@ -168,8 +183,8 @@ export default function App() {
         <h2 className={won ? 'win-title' : ''}>{won ? 'You got it! 🍀' : 'Better luck tomorrow'}</h2>
         <p>
           {won
-            ? `You found ${target.name} in ${guesses.length} guess${guesses.length > 1 ? 'es' : ''}.`
-            : `The answer was ${target.name}.`}
+            ? `You found ${target?.name} in ${guesses.length} guess${guesses.length > 1 ? 'es' : ''}.`
+            : `The answer was ${target?.name}.`}
         </p>
         <button onClick={handleShare}>Copy Result</button>
         <br />

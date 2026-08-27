@@ -77,6 +77,13 @@ h1.title {
 
 .game-screen { animation: fadeIn 0.4s ease; }
 
+.loading-text {
+  font-weight: bold;
+  letter-spacing: 1px;
+  opacity: 0.85;
+  animation: fadeIn 0.5s ease;
+}
+
 .guess-form {
   display: flex;
   justify-content: center;
