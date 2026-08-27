@@ -1,6 +1,51 @@
 import { PLAYERS } from './players.js';
+import { supabase } from './supabaseClient.js';
 
 export const MAX_GUESSES = 8;
+
+// --- Live database (Supabase) ---
+// Players and the daily answer are both stored in Supabase, so the roster
+// and the day's puzzle can be updated any time from the dashboard without
+// a new deploy. We fall back to the bundled static data if the DB is
+// unreachable, so the game never breaks.
+export async function fetchPlayersFromDB() {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.from('players').select('*').order('id');
+    if (error || !data || data.length === 0) return null;
+    return data.map((row) => ({
+      name: row.name,
+      position: row.position,
+      number: row.number,
+      heightIn: row.height_in,
+      heightStr: row.height_str,
+      debut: row.debut,
+      allStar: row.all_star,
+    }));
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function fetchTodaysAnswerNameFromDB() {
+  if (!supabase) return null;
+  try {
+    const iso = dateKeyISO();
+    const { data, error } = await supabase
+      .from('daily_puzzle')
+      .select('players(name)')
+      .eq('date', iso)
+      .single();
+    if (error || !data?.players?.name) return null;
+    return data.players.name;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function dateKeyISO(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 export function dailySeed() {
   const today = new Date();
@@ -24,20 +69,28 @@ export function dateKeyRaw(d = new Date()) {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
-// Fetches today's answer from the hosted schedule (public/answers.json),
-// which acts as our once-a-day "database" of daily answers. Falls back to
-// a deterministic local computation if the fetch fails for any reason.
-export async function fetchTodaysPlayer() {
+// Resolves today's answer, trying the live Supabase database first, then
+// the static hosted schedule (public/answers.json), then a deterministic
+// local computation as a last resort. `playerList` should be whichever
+// roster is currently loaded (DB roster if available, else the static one).
+export async function fetchTodaysPlayer(playerList = PLAYERS) {
+  const dbName = await fetchTodaysAnswerNameFromDB();
+  if (dbName) {
+    const player = playerList.find((p) => p.name === dbName);
+    if (player) return player;
+  }
+
   try {
     const res = await fetch('./answers.json', { cache: 'no-store' });
     if (!res.ok) throw new Error('bad response');
     const schedule = await res.json();
     const name = schedule[dateKeyRaw()];
-    const player = PLAYERS.find((p) => p.name === name);
+    const player = playerList.find((p) => p.name === name);
     if (player) return player;
     throw new Error('no matching player for today');
   } catch (e) {
-    return getTodaysPlayerFallback();
+    const idx = dailySeed() % playerList.length;
+    return playerList[idx];
   }
 }
 

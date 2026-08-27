@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import logo from './assets/logo.png';
-import { PLAYERS } from './players.js';
+import { PLAYERS as STATIC_PLAYERS } from './players.js';
 import {
   MAX_GUESSES,
   fetchTodaysPlayer,
+  fetchPlayersFromDB,
   todayKey,
   safeGet,
   safeSet,
@@ -19,6 +20,7 @@ import GuessRow, { EmptyRow, FLIP_DURATION_MS } from './components/GuessRow.jsx'
 import Modal from './components/Modal.jsx';
 
 export default function App() {
+  const [players, setPlayers] = useState(STATIC_PLAYERS);
   const [target, setTarget] = useState(null);
   const [started, setStarted] = useState(false);
   const [guesses, setGuesses] = useState([]);
@@ -31,12 +33,18 @@ export default function App() {
   const [showStats, setShowStats] = useState(false);
   const messageTimeout = useRef(null);
 
-  // Fetch today's answer from the hosted daily schedule once, on load.
+  // Load the roster from the live database (falls back to the bundled
+  // static list if Supabase is unreachable), then resolve today's answer.
   useEffect(() => {
     let cancelled = false;
-    fetchTodaysPlayer().then((p) => {
+    (async () => {
+      const dbPlayers = await fetchPlayersFromDB();
+      const roster = dbPlayers && dbPlayers.length > 0 ? dbPlayers : STATIC_PLAYERS;
+      if (cancelled) return;
+      setPlayers(roster);
+      const p = await fetchTodaysPlayer(roster);
       if (!cancelled) setTarget(p);
-    });
+    })();
     return () => { cancelled = true; };
   }, []);
 
@@ -48,7 +56,7 @@ export default function App() {
     if (!saved) return;
     try {
       const data = JSON.parse(saved);
-      const restored = data.guesses.map((n) => PLAYERS.find((p) => p.name === n)).filter(Boolean);
+      const restored = data.guesses.map((n) => players.find((p) => p.name === n)).filter(Boolean);
       if (restored.length === 0) return;
       setGuesses(restored);
       setGameOver(data.gameOver);
@@ -69,7 +77,7 @@ export default function App() {
 
   function handleGuess(name) {
     if (gameOver) return;
-    const player = PLAYERS.find((p) => p.name === name);
+    const player = players.find((p) => p.name === name);
     if (!player) return;
     if (guesses.some((g) => g.name === player.name)) {
       flashMessage('Already guessed that player.');
@@ -140,7 +148,7 @@ export default function App() {
         <StartScreen onStart={() => setStarted(true)} />
       ) : (
         <div className="game-screen">
-          <GuessInput onGuess={handleGuess} guessedNames={guessedNames} disabled={gameOver} />
+          <GuessInput players={players} onGuess={handleGuess} guessedNames={guessedNames} disabled={gameOver} />
           <div className="guess-counter">
             {!gameOver && `Guesses remaining: ${MAX_GUESSES - guesses.length}`}
           </div>

@@ -1,13 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { PLAYERS } from '../players.js';
 
-export default function GuessInput({ onGuess, guessedNames, disabled }) {
+export default function GuessInput({ players, onGuess, guessedNames, disabled }) {
   const [value, setValue] = useState('');
   const [shake, setShake] = useState(false);
   const wrapperRef = useRef(null);
 
   const matches = value.trim()
-    ? PLAYERS.filter(
+    ? players.filter(
         (p) => p.name.toLowerCase().includes(value.trim().toLowerCase()) && !guessedNames.has(p.name)
       ).slice(0, 6)
     : [];
@@ -32,7 +31,7 @@ export default function GuessInput({ onGuess, guessedNames, disabled }) {
 
   function handleKeyDown(e) {
     if (e.key === 'Enter') {
-      const match = PLAYERS.find((p) => p.name.toLowerCase() === value.trim().toLowerCase());
+      const match = players.find((p) => p.name.toLowerCase() === value.trim().toLowerCase());
       if (match && !guessedNames.has(match.name)) {
         pick(match.name);
       } else {
