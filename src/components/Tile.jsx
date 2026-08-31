@@ -27,7 +27,7 @@ export default function Tile({ label, status, arrow, delay, isName }) {
         className="tile-inner"
         style={{
           transform: flipped ? 'rotateX(180deg)' : 'rotateX(0deg)',
-          transition: `transform 0.5s ease`,
+          transition: `transform 0.25s ease-in`,
           transitionDelay: `${delay}ms`,
         }}
       >

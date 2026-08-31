@@ -135,7 +135,7 @@ export default function App() {
       <Header onHelp={() => setShowHelp(true)} onStats={() => setShowStats(true)} />
 
       <header className="game-header">
-        <img src={logo} alt="Russell logo" className="logo" />
+        {started && <img src={logo} alt="Russell logo" className="logo" />}
         <h1 className="title">RUSSELL</h1>
         <div className="subtitle">CAN YOU GUESS TODAY'S CELTIC?</div>
       </header>

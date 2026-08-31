@@ -2,7 +2,7 @@ import Tile from './Tile.jsx';
 import { buildRowCells } from '../gameLogic.js';
 
 // Tiles flip one at a time, in order — each one waits for the previous to finish.
-export const FLIP_DURATION_MS = 500;
+export const FLIP_DURATION_MS = 250;
 
 export default function GuessRow({ guess, target, animate }) {
   const cells = buildRowCells(guess, target);
