@@ -22,7 +22,7 @@ export default function Tile({ label, status, arrow, delay, isName }) {
   const textColor = status === 'wrong' ? '#222' : '#fff';
 
   return (
-    <div className="tile-3d" style={{ perspective: 600 }}>
+    <div className={`tile-3d${isName ? ' tile-3d-name' : ''}`} style={{ perspective: 600 }}>
       <div
         className="tile-inner"
         style={{
@@ -33,7 +33,7 @@ export default function Tile({ label, status, arrow, delay, isName }) {
       >
         <div className="tile-face tile-front" aria-hidden="true" />
         <div
-          className="tile-face tile-back"
+          className={`tile-face tile-back${isName ? ' tile-name' : ''}`}
           style={{ background: STATUS_COLORS[status], color: textColor, textAlign: isName ? 'left' : 'center' }}
         >
           {label}{arrow ? <span className="arrow-symbol">{ARROW_SYMBOL[arrow]}</span> : null}

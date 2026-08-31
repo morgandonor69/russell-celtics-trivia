@@ -114,9 +114,10 @@ export function saveStats(stats) {
   safeSet('russell-stats', JSON.stringify(stats));
 }
 
-export function arrowFor(guessVal, targetVal) {
+export function arrowFor(guessVal, targetVal, closeRange = 0) {
   if (guessVal === targetVal) return { status: 'correct', arrow: '' };
-  return { status: 'wrong', arrow: guessVal < targetVal ? 'up' : 'down' };
+  const status = Math.abs(guessVal - targetVal) <= closeRange ? 'partial' : 'wrong';
+  return { status, arrow: guessVal < targetVal ? 'up' : 'down' };
 }
 
 export function positionResult(guessPos, targetPos) {
@@ -130,10 +131,10 @@ export function positionResult(guessPos, targetPos) {
 // Builds the ordered list of cell results for a guess row
 export function buildRowCells(guess, target) {
   const posStatus = positionResult(guess.position, target.position);
-  const numInfo = arrowFor(guess.number, target.number);
-  const heightInfo = arrowFor(guess.heightIn, target.heightIn);
-  const debutInfo = arrowFor(guess.debut, target.debut);
-  const allStarInfo = arrowFor(guess.allStar, target.allStar);
+  const numInfo = arrowFor(guess.number, target.number, 5);
+  const heightInfo = arrowFor(guess.heightIn, target.heightIn, 3);
+  const debutInfo = arrowFor(guess.debut, target.debut, 5);
+  const allStarInfo = arrowFor(guess.allStar, target.allStar, 3);
 
   return [
     { key: 'name', label: guess.name, status: guess.name === target.name ? 'correct' : 'wrong', arrow: '' },

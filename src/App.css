@@ -299,5 +299,22 @@ footer {
 @media (max-width: 600px) {
   h1.title { font-size: 2.1rem; }
   thead th { font-size: .6rem; }
-  .tile-face { font-size: .68rem; }
+  .tile-face { font-size: .68rem; padding: 0 3px; }
+  .tile-face.tile-name {
+    font-size: .56rem;
+    white-space: normal;
+    line-height: 1.15;
+    word-break: break-word;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+  .tile-3d.tile-3d-name, .tile-3d.tile-3d-name .tile-inner { height: 62px; }
+  tbody td.cell-wrapper { padding: 2px; border-width: 2px; height: 68px; }
+}
+
+@media (max-width: 420px) {
+  .tile-face.tile-name { font-size: .48rem; }
 }

@@ -205,7 +205,7 @@ export default function App() {
         <p style={{ textAlign: 'left' }}>After each guess, the tiles flip to reveal how you compare:</p>
         <ul style={{ textAlign: 'left' }}>
           <li><b>Green</b> = exact match</li>
-          <li><b>Gold</b> = shares a position</li>
+          <li><b>Gold</b> = close! Shares a position, or is within 5 for number, 3 inches for height, 5 years for Celtic debut, or 3 for All-Star games</li>
           <li><b>Arrows (▲/▼)</b> = the mystery player's number/height/debut year/All-Star count is higher or lower than your guess</li>
         </ul>
         <button onClick={() => setShowHelp(false)}>Got it</button>
